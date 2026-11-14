@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop Rent Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <h1>Shop Rent Manager</h1>
+      <p class="muted">Sign in to manage your 13 shops</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" required placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
+      </form>
+      <p id="login-error" class="error-text hidden"></p>
+      <p class="muted mt-3" style="font-size:0.8rem">
+        First time? Create a user in Supabase Dashboard → Authentication → Users
+      </p>
+    </div>
+  </div>
+
+  <div class="app hidden" id="app">
+    <header>
+      <h1>Shop Rent Manager</h1>
+      <div class="flex">
+        <nav id="nav">
+          <button data-page="dashboard" class="active">Dashboard</button>
+          <button data-page="shops">Shops</button>
+          <button data-page="rent">Record Rent</button>
+          <button data-page="electricity">Electricity</button>
+          <button data-page="reports">Reports</button>
+        </nav>
+        <button class="btn btn-outline btn-sm" id="btn-logout">Logout</button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page">
+      <div class="grid grid-3 mb-2">
+        <div class="card">
+          <div class="muted">Expected Rent (This Month)</div>
+          <div class="stat" id="stat-expected">৳0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Collected</div>
+          <div class="stat success" id="stat-collected">৳0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Outstanding</div>
+          <div class="stat danger" id="stat-outstanding">৳0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Shops Overview</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Shop</th>
+                <th>Tenant</th>
+                <th>Monthly Rent</th>
+                <th>Status</th>
+                <th>This Month</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-shops-body">
+              <tr><td colspan="5" class="muted">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHOPS -->
+    <section id="page-shops" class="page hidden">
+      <div class="flex justify-between mb-2">
+        <h2>All Shops</h2>
+        <button class="btn btn-primary btn-sm" id="btn-edit-shop">Edit Selected</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Shop</th>
+                <th>Tenant</th>
+                <th>Phone</th>
+                <th>Rent</th>
+                <th>Meter</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="shops-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Edit Shop Modal-like form -->
+      <div id="shop-form-card" class="card mt-3 hidden">
+        <h3>Edit Shop</h3>
+        <form id="shop-form">
+          <input type="hidden" id="shop-id" />
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label>Shop Number</label>
+              <input type="text" id="shop-number" readonly />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="shop-status">
+                <option value="active">Active</option>
+                <option value="vacant">Vacant</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tenant Name</label>
+              <input type="text" id="tenant-name" />
+            </div>
+            <div class="form-group">
+              <label>Tenant Phone</label>
+              <input type="text" id="tenant-phone" />
+            </div>
+            <div class="form-group">
+              <label>Monthly Rent (৳)</label>
+              <input type="number" id="monthly-rent" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Electricity Meter</label>
+              <input type="text" id="electricity-meter" />
+            </div>
+            <div class="form-group">
+              <label>Security Deposit (৳)</label>
+              <input type="number" id="security-deposit" step="0.01" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="shop-notes" rows="2"></textarea>
+          </div>
+          <div class="flex">
+            <button type="submit" class="btn btn-primary">Save Shop</button>
+            <button type="button" class="btn btn-outline" id="btn-cancel-shop">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- RECORD RENT -->
+    <section id="page-rent" class="page hidden">
+      <div class="card">
+        <h2>Record Rent Payment</h2>
+        <form id="rent-form">
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label>Shop</label>
+              <select id="rent-shop" required></select>
+            </div>
+            <div class="form-group">
+              <label>Rent Month</label>
+              <input type="month" id="rent-month" required />
+            </div>
+            <div class="form-group">
+              <label>Amount Collected (৳)</label>
+              <input type="number" id="rent-amount" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label>Collection Date</label>
+              <input type="date" id="rent-date" required />
+            </div>
+            <div class="form-group">
+              <label>Payment Method</label>
+              <select id="rent-method" required>
+                <option value="cash">Cash</option>
+                <option value="bkash">bKash</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes (optional)</label>
+            <input type="text" id="rent-notes" />
+          </div>
+          <button type="submit" class="btn btn-primary">Save Rent Payment</button>
+        </form>
+      </div>
+
+      <div class="card mt-3">
+        <h3>Recent Rent Payments</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Shop</th>
+                <th>Month</th>
+                <th>Amount</th>
+                <th>Method</th>
+              </tr>
+            </thead>
+            <tbody id="recent-rent-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ELECTRICITY -->
+    <section id="page-electricity" class="page hidden">
+      <div class="card">
+        <h2>Record Electricity Bill</h2>
+        <form id="elec-form">
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label>Shop</label>
+              <select id="elec-shop" required></select>
+            </div>
+            <div class="form-group">
+              <label>Billing Month</label>
+              <input type="month" id="elec-month" required />
+            </div>
+            <div class="form-group">
+              <label>Previous Reading</label>
+              <input type="number" id="elec-prev" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label>Current Reading</label>
+              <input type="number" id="elec-curr" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label>Bill Amount (৳)</label>
+              <input type="number" id="elec-amount" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label>Already Paid?</label>
+              <select id="elec-paid">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Payment Method (if paid)</label>
+              <select id="elec-method">
+                <option value="">—</option>
+                <option value="cash">Cash</option>
+                <option value="bkash">bKash</option>
+                <option value="bank">Bank Transfer</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Payment Date (if paid)</label>
+              <input type="date" id="elec-pay-date" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Electricity Bill</button>
+        </form>
+      </div>
+
+      <div class="card mt-3">
+        <h3>Recent Electricity Bills</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Shop</th>
+                <th>Month</th>
+                <th>Units</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-elec-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="page-reports" class="page hidden">
+      <div class="card">
+        <h2>Monthly Report</h2>
+        <div class="flex mb-2">
+          <div class="form-group" style="margin:0">
+            <label>Select Month</label>
+            <input type="month" id="report-month" />
+          </div>
+          <button class="btn btn-primary" id="btn-generate-report" style="align-self:flex-end">Generate</button>
+        </div>
+
+        <div id="report-content" class="hidden">
+          <div class="grid grid-3 mb-2">
+            <div class="card">
+              <div class="muted">Expected Rent</div>
+              <div class="stat" id="report-expected">৳0</div>
+            </div>
+            <div class="card">
+              <div class="muted">Collected Rent</div>
+              <div class="stat success" id="report-collected">৳0</div>
+            </div>
+            <div class="card">
+              <div class="muted">Electricity Total</div>
+              <div class="stat" id="report-elec">৳0</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Shop</th>
+                  <th>Expected</th>
+                  <th>Collected</th>
+                  <th>Outstanding</th>
+                  <th>Electricity</th>
+                </tr>
+              </thead>
+              <tbody id="report-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
